@@ -1,7 +1,13 @@
 import UsersCollection from "../models/user.js";
 import createHttpError from "http-errors";
 import jwt from "jsonwebtoken";
-import { deleteSessionByUserId ,registerUser,loginUser,logoutUser,refreshSession } from "../services/auth.js";
+import {
+  deleteSessionByUserId,
+  registerUser,
+  loginUser,
+  logoutUser,
+  refreshSession,
+} from "../services/auth.js";
 import { sendEmail } from "../services/emailService.js";
 import bcrypt from "bcrypt";
 
@@ -51,7 +57,9 @@ export const refreshSessionController = async (req, res, next) => {
     const refreshToken = req.cookies.refreshToken;
 
     if (!refreshToken) {
-      return res.status(401).json({ status: 401, message: "Refresh token missing" });
+      return res
+        .status(401)
+        .json({ status: 401, message: "Refresh token missing" });
     }
 
     const session = await refreshSession(refreshToken);
@@ -73,7 +81,6 @@ export const refreshSessionController = async (req, res, next) => {
     next(error);
   }
 };
-
 
 export const logoutUserController = async (req, res, next) => {
   try {
@@ -99,23 +106,23 @@ export const sendResetEmailController = async (req, res, next) => {
     if (!user) {
       return res.status(404).json({ status: 404, message: "User not found!" });
     }
-console.log("JWT_SECRET:", process.env.JWT_SECRET);
+    console.log("JWT_SECRET:", process.env.JWT_SECRET);
 
     // JWT token üret
     const token = jwt.sign(
-      { email: user.email },   // email koyuyoruz
+      { email: user.email }, // email koyuyoruz
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
 
     const resetLink = `${process.env.APP_DOMAIN}/auth/reset-pwd?token=${token}`;
 
-    await sendEmail({
-      to: email,
-      subject: "Password Reset",
-      html: `<p>Click the link to reset your password:</p>
-             <a href="${resetLink}">${resetLink}</a>`,
-    });
+    await sendEmail(
+      email,
+      "Password Reset",
+      `<p>Click the link to reset your password:</p>
+    <a href="${resetLink}">${resetLink}</a>`
+    );
 
     res.json({
       status: 200,
