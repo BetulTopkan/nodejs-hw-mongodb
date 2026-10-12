@@ -59,27 +59,42 @@ export const logoutUser = async ({ sessionId, refreshToken }) => {
     await Session.deleteOne({ _id: sessionId, refreshToken });
 };
 
+
 export const sendResetEmail = async (email) => {
     const user = await User.findOne({ email });
+
     if (!user) {
         throw createHttpError(404, 'User not found!');
     }
 
-    const token = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '5m' });
+    const token = jwt.sign(
+        { email },
+        process.env.JWT_SECRET,
+        { expiresIn: '5m' }
+    );
+
     const resetLink = `${process.env.APP_DOMAIN}/reset-password?token=${token}`;
 
     try {
         await sendMail({
             to: email,
             subject: 'Password Reset',
-            html: `<p>Click the link below to reset your password:</p>
-                   <a href="${resetLink}">${resetLink}</a>
-                   <p>This link will expire in 5 minutes.</p>`,
+            html: `
+                <p>Click the link below to reset your password:</p>
+                <a href="${resetLink}">${resetLink}</a>
+                <p>This link will expire in 5 minutes.</p>
+            `,
         });
-    } catch {
-        throw createHttpError(500, 'Failed to send the email, please try again later.');
+    } catch (error) {
+        console.error('sendResetEmail error:', error);
+
+        throw createHttpError(
+            500,
+            'Failed to send the email, please try again later.'
+        );
     }
 };
+
 
 export const resetPassword = async ({ token, password }) => {
     let decoded;
